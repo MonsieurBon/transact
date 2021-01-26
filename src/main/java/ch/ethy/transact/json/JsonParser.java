@@ -1,5 +1,8 @@
 package ch.ethy.transact.json;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -197,5 +200,35 @@ public class JsonParser {
 
   private Double toFloatingPointNumber(String literal) {
     return Double.parseDouble(literal);
+  }
+
+  public <T> T parse(Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    Map<String, Object> res = (Map<String, Object>) parse();
+
+    T newObj;
+    try {
+      Constructor<T> declaredConstructor = clazz.getDeclaredConstructor();
+      declaredConstructor.setAccessible(true);
+      newObj = declaredConstructor.newInstance();
+    } catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
+      throw new CannotCreateObjectException(e);
+    }
+
+    try {
+      for (Map.Entry<String, Object> property : res.entrySet()) {
+        Field field = clazz.getDeclaredField(property.getKey());
+        field.setAccessible(true);
+        try {
+          field.set(newObj, property.getValue());
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    } catch (NoSuchFieldException e) {
+      throw new InvalidPropertyException(e);
+    }
+
+    return newObj;
   }
 }

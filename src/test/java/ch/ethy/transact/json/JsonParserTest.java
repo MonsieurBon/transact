@@ -2,6 +2,7 @@ package ch.ethy.transact.json;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -458,5 +459,59 @@ class JsonParserTest {
 
     Collection<Object> collection = (Collection<Object>) new JsonParser(input).parse();
     assertEquals(List.of("foo", Map.of("bar", true, "baz", 12345)), collection);
+  }
+
+  @Test
+  public void parseToObject() throws NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchFieldException {
+    String input = """
+        {
+          "stringProp": "foobar",
+          "boolProp": true,
+          "nullProp": null,
+          "numberProp": 246531
+        }
+        """;
+
+    TestObject testObj = new JsonParser(input).parse(TestObject.class);
+    assertEquals("foobar", testObj.stringProp);
+    assertTrue(testObj.boolProp);
+    assertNull(testObj.nullProp);
+  }
+
+  @Test
+  public void parseToObject_noDefaultConstructor() {
+    String input = "{}";
+
+    JsonParser parser = new JsonParser(input);
+    assertThrows(CannotCreateObjectException.class, () -> parser.parse(NoDefaultConstructor.class));
+  }
+
+  @Test
+  public void parseToObject_invalidProperty() {
+    String input = """
+        {
+          "invalidProperty": "value"
+        }
+        """;
+
+    JsonParser parser = new JsonParser(input);
+    assertThrows(InvalidPropertyException.class, () -> parser.parse(TestObject.class));
+  }
+
+  public static class TestObject {
+    private String stringProp = "myString";
+    private boolean boolProp = false;
+    private Object nullProp = new Object();
+    private Number numberProp = 0;
+    private TestObject objectProp;
+    private List<Object> listProp;
+  }
+
+  public static class NoDefaultConstructor {
+    private final String foo;
+
+    public NoDefaultConstructor(String foo) {
+      this.foo = foo;
+    }
   }
 }
