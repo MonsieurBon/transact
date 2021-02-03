@@ -2,7 +2,6 @@ package ch.ethy.transact.json.parse;
 
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -10,6 +9,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -478,7 +478,7 @@ class JsonParserTest {
   }
 
   @Test
-  public void parseToObject() throws NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchFieldException {
+  public void parseToObject() {
     String input = """
         {
           "stringProp": "foobar",
@@ -492,6 +492,51 @@ class JsonParserTest {
     assertEquals("foobar", testObj.stringProp);
     assertTrue(testObj.boolProp);
     assertNull(testObj.nullProp);
+  }
+
+  @Test
+  public void parseToObject_nestedObject() {
+    String input = """
+        {
+          "stringProp": "foobar",
+          "boolProp": true,
+          "nullProp": null,
+          "numberProp": 246531,
+          "objectProp": {
+            "nestedProp": "bazzinga"
+          }
+        }
+        """;
+
+    TestObject testObj = new JsonParser(input).parse(TestObject.class);
+    assertNotNull(testObj.objectProp);
+    assertEquals("bazzinga", testObj.objectProp.nestedProp);
+  }
+
+  @Test
+  public void parseToObject_nestedCollection() {
+    String input = """
+        {
+          "listProp": ["baz"]
+        }
+        """;
+
+    TestObject testObj = new JsonParser(input).parse(TestObject.class);
+    assertNotNull(testObj.listProp);
+    assertEquals(1, testObj.listProp.size());
+    assertEquals("baz", testObj.listProp.get(0));
+  }
+
+  @Test
+  public void parseToObject_parentProperty() {
+    String input = """
+        {
+          "parentProp": "foobar"
+        }
+        """;
+
+    TestObject testObj = new JsonParser(input).parse(TestObject.class);
+    assertEquals("foobar", testObj.getParentProp());
   }
 
   @Test
@@ -514,15 +559,31 @@ class JsonParserTest {
     assertThrows(InvalidPropertyException.class, () -> parser.parse(TestObject.class));
   }
 
-  public static class TestObject {
+  @SuppressWarnings({"FieldMayBeFinal", "unused"})
+  public static class ParentClass {
+    private String parentProp = "parentString";
+
+    String getParentProp() {
+      return parentProp;
+    }
+  }
+
+  @SuppressWarnings({"FieldMayBeFinal", "unused"})
+  public static class TestObject extends ParentClass {
     private String stringProp = "myString";
     private boolean boolProp = false;
     private Object nullProp = new Object();
     private Number numberProp = 0;
-    private TestObject objectProp;
+    private NestedObject objectProp;
     private List<Object> listProp;
   }
 
+  @SuppressWarnings({"FieldMayBeFinal", "unused"})
+  public static class NestedObject {
+    private String nestedProp = "nestedString";
+  }
+
+  @SuppressWarnings({"FieldCanBeLocal", "unused"})
   public static class NoDefaultConstructor {
     private final String foo;
 

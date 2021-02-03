@@ -201,6 +201,11 @@ public class JsonParser {
     @SuppressWarnings("unchecked")
     Map<String, Object> res = (Map<String, Object>) parse();
 
+    return mapFields(clazz, res);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T mapFields(Class<T> clazz, Map<String, Object> res) {
     T newObj;
     try {
       Constructor<T> declaredConstructor = clazz.getDeclaredConstructor();
@@ -212,10 +217,14 @@ public class JsonParser {
 
     try {
       for (Map.Entry<String, Object> property : res.entrySet()) {
-        Field field = clazz.getDeclaredField(property.getKey());
+        Field field = getField(clazz, property.getKey());
         field.setAccessible(true);
         try {
-          field.set(newObj, property.getValue());
+          if (property.getValue() instanceof Map) {
+            field.set(newObj, mapFields(field.getType(), (Map<String, Object>) property.getValue()));
+          } else {
+            field.set(newObj, property.getValue());
+          }
         } catch (IllegalAccessException e) {
           throw new RuntimeException(e);
         }
@@ -225,5 +234,18 @@ public class JsonParser {
     }
 
     return newObj;
+  }
+
+  private <T> Field getField(Class<T> clazz, String fieldName) throws NoSuchFieldException {
+    try {
+      return clazz.getDeclaredField(fieldName);
+    } catch (NoSuchFieldException e) {
+      Class<? super T> superclass = clazz.getSuperclass();
+      if (superclass != null) {
+        return getField(superclass, fieldName);
+      }
+
+      throw e;
+    }
   }
 }
