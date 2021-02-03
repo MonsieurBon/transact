@@ -1,4 +1,4 @@
-package ch.ethy.transact.json;
+package ch.ethy.transact.json.parse;
 
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +70,22 @@ class JsonParserTest {
 
     long longer = (long) new JsonParser(input).parse();
     assertEquals(-112233445566778899L, longer);
+  }
+
+  @Test
+  public void parseDouble() {
+    String input = "42.42";
+
+    double d = (double) new JsonParser(input).parse();
+    assertEquals(42.42, d);
+  }
+
+  @Test
+  public void parseNegativeDouble() {
+    String input = "-42.42";
+
+    double d = (double) new JsonParser(input).parse();
+    assertEquals(-42.42, d);
   }
 
   @Test

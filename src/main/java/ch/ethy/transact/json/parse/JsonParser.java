@@ -1,4 +1,4 @@
-package ch.ethy.transact.json;
+package ch.ethy.transact.json.parse;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -6,25 +6,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
+
+import static ch.ethy.transact.json.SpecialCharacters.BACKSLASH;
+import static ch.ethy.transact.json.SpecialCharacters.CLOSING_BRACES;
+import static ch.ethy.transact.json.SpecialCharacters.CLOSING_BRACKETS;
+import static ch.ethy.transact.json.SpecialCharacters.COLON;
+import static ch.ethy.transact.json.SpecialCharacters.COMMA;
+import static ch.ethy.transact.json.SpecialCharacters.DOUBLE_QUOTES;
+import static ch.ethy.transact.json.SpecialCharacters.ESCAPED_CHARS;
+import static ch.ethy.transact.json.SpecialCharacters.OPENING_BRACES;
+import static ch.ethy.transact.json.SpecialCharacters.OPENING_BRACKETS;
+import static ch.ethy.transact.json.SpecialCharacters.SPACE;
 
 public class JsonParser {
-  private static final char SPACE = 32;
-  private static final char DOUBLE_QUOTES = 34;
-  private static final char COMMA = 44;
-  private static final char COLON = 58;
-  private static final char OPENING_BRACKETS = 91;
-  private static final char BACKSLASH = 92;
-  private static final char CLOSING_BRACKETS = 93;
-  private static final char OPENING_BRACES = 123;
-  private static final char CLOSING_BRACES = 125;
-
-  private static final List<Character> ESCAPED_CHARS = List.of(BACKSLASH, DOUBLE_QUOTES);
-
-  private static final Pattern intPattern = Pattern.compile("^[0-9]+$");
-
   private final String input;
   private int position = 0;
 

@@ -1,4 +1,4 @@
-package ch.ethy.transact.json;
+package ch.ethy.transact.json.parse;
 
 public class InvalidJsonException extends RuntimeException {
   private final String input;
