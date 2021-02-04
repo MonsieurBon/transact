@@ -319,6 +319,16 @@ class JsonParserTest {
   }
 
   @Test
+  public void parseCompactObject() {
+    String input = """
+        {"foo":true}
+        """;
+
+    Map<String, Object> objMap = (Map<String, Object>) new JsonParser(input).parse();
+    assertEquals(Map.of("foo", true), objMap);
+  }
+
+  @Test
   public void parseCollection_empty() {
     String input = "[]";
 
@@ -449,6 +459,16 @@ class JsonParserTest {
   }
 
   @Test
+  public void parseCompactCollection() {
+    String input = """
+        [true]
+        """;
+
+    Collection<Object> collection = (Collection<Object>) new JsonParser(input).parse();
+    assertEquals(List.of(true), collection);
+  }
+
+  @Test
   public void parseObject_nestedCollection() {
     String input = """
         {
@@ -492,6 +512,7 @@ class JsonParserTest {
     assertEquals("foobar", testObj.stringProp);
     assertTrue(testObj.boolProp);
     assertNull(testObj.nullProp);
+    assertEquals(246531, testObj.numberProp);
   }
 
   @Test
@@ -559,8 +580,71 @@ class JsonParserTest {
     assertThrows(InvalidPropertyException.class, () -> parser.parse(TestObject.class));
   }
 
+  @Test
+  public void parseToGenericString() {
+    String input = """
+        {
+          "genericProp": "I'm generic!"
+        }
+        """;
+
+    GenericString genStr = new JsonParser(input).parse(GenericString.class);
+    assertEquals("I'm generic!", genStr.genericProp);
+  }
+
+  @Test
+  public void parseToGenericTestObject() {
+    String input = """
+        {
+          "genericProp": {
+            "stringProp": "foobar",
+            "boolProp": true,
+            "nullProp": null,
+            "numberProp": 246531
+          }
+        }
+        """;
+
+    GenericTestObject genTestObj = new JsonParser(input).parse(GenericTestObject.class);
+    assertNotNull(genTestObj.genericProp);
+    assertEquals("foobar", genTestObj.genericProp.stringProp);
+    assertTrue(genTestObj.genericProp.boolProp);
+    assertNull(genTestObj.genericProp.nullProp);
+    assertEquals(246531, genTestObj.genericProp.numberProp);
+  }
+
+  @Test
+  public void parseToListProp() {
+    String input = """
+        {
+          "listProp": [{
+            "nestedProp": "foobar"
+          }]
+        }
+        """;
+
+    GenericListObj genListObj = new JsonParser(input).parse(GenericListObj.class);
+    assertEquals(1, genListObj.listProp.size());
+    assertEquals("foobar", genListObj.listProp.get(0).nestedProp);
+  }
+
+  @Test
+  public void parseToGenericListProp() {
+    String input = """
+        {
+          "genericListProp": [{
+            "nestedProp": "foobar"
+          }]
+        }
+        """;
+
+    GenericListClass genListObj = new JsonParser(input).parse(GenericListClass.class);
+    assertEquals(1, genListObj.genericListProp.size());
+    assertEquals("foobar", genListObj.genericListProp.get(0).nestedProp);
+  }
+
   @SuppressWarnings({"FieldMayBeFinal", "unused"})
-  public static class ParentClass {
+  private static class ParentClass {
     private String parentProp = "parentString";
 
     String getParentProp() {
@@ -569,7 +653,7 @@ class JsonParserTest {
   }
 
   @SuppressWarnings({"FieldMayBeFinal", "unused"})
-  public static class TestObject extends ParentClass {
+  private static class TestObject extends ParentClass {
     private String stringProp = "myString";
     private boolean boolProp = false;
     private Object nullProp = new Object();
@@ -578,17 +662,42 @@ class JsonParserTest {
     private List<Object> listProp;
   }
 
+  private static class GenericListObj {
+    private List<NestedObject> listProp;
+  }
+
   @SuppressWarnings({"FieldMayBeFinal", "unused"})
-  public static class NestedObject {
+  private static class NestedObject {
     private String nestedProp = "nestedString";
   }
 
   @SuppressWarnings({"FieldCanBeLocal", "unused"})
-  public static class NoDefaultConstructor {
+  private static class NoDefaultConstructor {
     private final String foo;
 
     public NoDefaultConstructor(String foo) {
       this.foo = foo;
     }
+  }
+
+  @SuppressWarnings("unused")
+  private static class GenericParentClass<T> {
+    T genericProp;
+  }
+
+  private static class GenericString extends GenericParentClass<String> {
+
+  }
+
+  private static class GenericTestObject extends GenericParentClass<TestObject> {
+
+  }
+
+  private static class GenericParentListClass<T> {
+    List<T> genericListProp;
+  }
+
+  private static class GenericListClass extends GenericParentListClass<NestedObject> {
+
   }
 }

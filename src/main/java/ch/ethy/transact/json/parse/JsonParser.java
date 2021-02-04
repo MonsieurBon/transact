@@ -3,10 +3,16 @@ package ch.ethy.transact.json.parse;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ch.ethy.transact.json.SpecialCharacters.BACKSLASH;
 import static ch.ethy.transact.json.SpecialCharacters.CLOSING_BRACES;
@@ -15,9 +21,11 @@ import static ch.ethy.transact.json.SpecialCharacters.COLON;
 import static ch.ethy.transact.json.SpecialCharacters.COMMA;
 import static ch.ethy.transact.json.SpecialCharacters.DOUBLE_QUOTES;
 import static ch.ethy.transact.json.SpecialCharacters.ESCAPED_CHARS;
+import static ch.ethy.transact.json.SpecialCharacters.LITERAL_TERMINATING;
 import static ch.ethy.transact.json.SpecialCharacters.OPENING_BRACES;
 import static ch.ethy.transact.json.SpecialCharacters.OPENING_BRACKETS;
 import static ch.ethy.transact.json.SpecialCharacters.SPACE;
+import static java.util.stream.Collectors.toList;
 
 public class JsonParser {
   private final String input;
@@ -152,7 +160,7 @@ public class JsonParser {
     for (; position < input.length(); position++) {
       char c = input.charAt(position);
 
-      if (c <= SPACE || c == COMMA) {
+      if (LITERAL_TERMINATING.contains(c)) {
         break;
       }
 
@@ -199,13 +207,15 @@ public class JsonParser {
 
   public <T> T parse(Class<T> clazz) {
     @SuppressWarnings("unchecked")
-    Map<String, Object> res = (Map<String, Object>) parse();
+    Map<String, Object> propertiesMap = (Map<String, Object>) parse();
 
-    return mapFields(clazz, res);
+    Map<Class<?>, Map<String, Class<?>>> genericsInformation = getGenericsInformation(clazz, Collections.emptyMap());
+
+    return mapFields(clazz, propertiesMap, genericsInformation);
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T mapFields(Class<T> clazz, Map<String, Object> res) {
+  private <T> T mapFields(Class<T> clazz, Map<String, Object> propMap, Map<Class<?>, Map<String, Class<?>>> genericsInformation) {
     T newObj;
     try {
       Constructor<T> declaredConstructor = clazz.getDeclaredConstructor();
@@ -216,12 +226,34 @@ public class JsonParser {
     }
 
     try {
-      for (Map.Entry<String, Object> property : res.entrySet()) {
+      for (Map.Entry<String, Object> property : propMap.entrySet()) {
         Field field = getField(clazz, property.getKey());
         field.setAccessible(true);
         try {
           if (property.getValue() instanceof Map) {
-            field.set(newObj, mapFields(field.getType(), (Map<String, Object>) property.getValue()));
+            Class<?> type = field.getType();
+
+            if (!type.equals(field.getGenericType())) {
+              type = genericsInformation.get(field.getDeclaringClass()).get(field.getGenericType().getTypeName());
+            }
+
+            field.set(newObj, mapFields(type, (Map<String, Object>) property.getValue(), genericsInformation));
+          } else if (property.getValue() instanceof List && field.getGenericType() instanceof ParameterizedType) {
+            Type actualTypeArgument = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+
+            Class<?> listType;
+            if (actualTypeArgument instanceof TypeVariable) {
+              listType = genericsInformation.get(field.getDeclaringClass()).get(actualTypeArgument.getTypeName());
+            } else {
+              listType = (Class<?>) actualTypeArgument;
+            }
+
+            List<?> mappedList = ((List<?>) property.getValue()).stream()
+                .map(value -> listType.isAssignableFrom(value.getClass()) ? value : mapFields(listType, (Map<String, Object>) value, genericsInformation))
+                .collect(toList());
+
+            field.set(newObj, mappedList);
+
           } else {
             field.set(newObj, property.getValue());
           }
@@ -247,5 +279,36 @@ public class JsonParser {
 
       throw e;
     }
+  }
+
+  private Map<Class<?>, Map<String, Class<?>>> getGenericsInformation(Class<?> clazz, Map<String, Class<?>> childGenerics) {
+    if (clazz.getSuperclass() == null) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, Class<?>> generics = new HashMap<>();
+
+    Type genericSuperclass = clazz.getGenericSuperclass();
+    Class<?> superclass = clazz.getSuperclass();
+    if (genericSuperclass instanceof ParameterizedType) {
+      TypeVariable<? extends Class<?>>[] typeParameters = superclass.getTypeParameters();
+      Type[] actualTypeArguments = ((ParameterizedType) genericSuperclass).getActualTypeArguments();
+      for(int i = 0; i < typeParameters.length; i++) {
+        Type typeArgument = actualTypeArguments[i];
+        String name = typeParameters[i].getName();
+
+        if (typeArgument instanceof TypeVariable) {
+          generics.put(name, childGenerics.get(typeArgument.getTypeName()));
+        } else {
+          generics.put(name, (Class<?>) typeArgument);
+        }
+      }
+    }
+
+    Map<Class<?>, Map<String, Class<?>>> classGenerics = new HashMap<>();
+    classGenerics.put(superclass, generics);
+    classGenerics.putAll(getGenericsInformation(superclass, generics));
+
+    return classGenerics;
   }
 }
