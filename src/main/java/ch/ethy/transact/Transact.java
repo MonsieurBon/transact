@@ -1,29 +1,34 @@
 package ch.ethy.transact;
 
-import ch.ethy.transact.json.parse.JsonParser;
-import ch.ethy.transact.ynab.BudgetResponse;
+import ch.ethy.transact.server.HttpResponse;
+import ch.ethy.transact.server.Server;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+
+import static ch.ethy.transact.server.HttpHeader.CONTENT_TYPE;
+import static ch.ethy.transact.server.HttpMethod.GET;
 
 public class Transact {
-  public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(new URI("https://api.youneedabudget.com/v1/budgets"))
-        .header("Authorization", "Bearer some_token")
-        .GET()
-        .build();
+  public static void main(String[] args) throws IOException {
 
-    HttpResponse<String> response = HttpClient.newBuilder()
-        .build()
-        .send(request, HttpResponse.BodyHandlers.ofString());
+//    InetSocketAddress addr = new InetSocketAddress(8080);
+//    HttpServer server = HttpServer.create(addr, 0);
+//    server.createContext("/", exchange -> {
+//
+//    });
+//    server.start();
 
-    String body = response.body();
+    Server server = Server.onPort(8080)
+        .addHandler("/", GET, request -> {
+          HttpResponse response = new HttpResponse(request.getHttpVersion(), 200, "OK");
 
-    BudgetResponse resp = new JsonParser(body).parse(BudgetResponse.class);
+          response.setBody("{\"foo\": 42}");
+          response.addHeader(CONTENT_TYPE, "application/json");
+
+          return response;
+        })
+        .create();
+
+    server.start();
   }
 }
