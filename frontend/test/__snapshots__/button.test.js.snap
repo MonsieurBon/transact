@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Button should render 1`] = `
+"
+<style>
+  :host {
+    contain: content;
+  }
+  
+  button {
+    background: transparent;
+    border: 1px solid black;
+    border-radius: 5px;
+    height: 35px;
+    padding: 0 20px;
+  }
+  
+  :host(.dark) button {
+    background: black;
+    border-color: white;
+    color: white;
+  }
+  
+  :host(.light) button {
+    background: white;
+  }
+</style>
+<button><slot></slot></button>
+"
+`;
