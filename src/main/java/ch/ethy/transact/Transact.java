@@ -1,22 +1,36 @@
 package ch.ethy.transact;
 
+import ch.ethy.transact.handlers.*;
+import ch.ethy.transact.log.*;
 import ch.ethy.transact.server.*;
 
-import java.io.*;
+import java.util.*;
 
 import static ch.ethy.transact.server.HttpMethod.*;
 
 public class Transact {
+  public static final String WEBAPP_BASE_PATH_OPTION = "--webappBasePath";
+  public static final String WEBAPP_BASE_PATH_DEFAULT = "/webapp";
   private RequestHandler staticResourcesHandler;
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     Transact app = new Transact();
-    app.setup();
+
+    String webappBasePath = Arrays.stream(args)
+        .dropWhile(arg -> !WEBAPP_BASE_PATH_OPTION.equals(arg))
+        .limit(2)
+        .skip(1)
+        .findFirst()
+        .orElse(WEBAPP_BASE_PATH_DEFAULT);
+
+    app.setup(webappBasePath);
     app.run();
   }
 
-  private void setup() {
-//    staticResourcesHandler = new StaticResourcesHandler("/webapp");
+  private void setup(String webappBasePath) {
+    Logger.addAppender(new ConsoleAppender());
+
+    staticResourcesHandler = new StaticResourcesHandler(webappBasePath);
   }
 
   private void run() {

@@ -1,6 +1,7 @@
 package ch.ethy.transact.handlers;
 
 import ch.ethy.transact.server.*;
+import ch.ethy.transact.server.exception.*;
 import org.junit.jupiter.api.*;
 
 import java.util.*;
@@ -57,5 +58,13 @@ class StaticResourcesHandlerTest {
 
     assertEquals(628, response.getBody().length);
     assertEquals("image/jpeg", response.getHeaders().get(CONTENT_TYPE));
+  }
+
+  @Test
+  public void returns404IfFileNotFound() {
+    HttpRequest request = new HttpRequest(HttpMethod.GET, "/foo.html", "HTTP/1.1", Collections.emptyMap(), new byte[0]);
+    StaticResourcesHandler handler = new StaticResourcesHandler("/dirDoesNotExist");
+
+    assertThrows(NotFoundException.class, () -> handler.handle(request));
   }
 }

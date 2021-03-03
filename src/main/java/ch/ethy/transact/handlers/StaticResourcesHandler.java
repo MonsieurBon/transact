@@ -1,6 +1,7 @@
 package ch.ethy.transact.handlers;
 
 import ch.ethy.transact.server.*;
+import ch.ethy.transact.server.exception.*;
 
 import java.io.*;
 import java.util.*;
@@ -9,21 +10,36 @@ import static ch.ethy.transact.server.ContentType.*;
 import static ch.ethy.transact.server.HttpHeader.*;
 
 public class StaticResourcesHandler implements RequestHandler {
-  private final String baseWebappPath;
+  public static final String DEFAULT_FILE_NAME = "index.html";
+  private final String webappBasePath;
 
-  public StaticResourcesHandler(String baseWebappPath) {
-    this.baseWebappPath = baseWebappPath;
+  public StaticResourcesHandler(String webappBasePath) {
+    this.webappBasePath = webappBasePath;
   }
 
   @Override
   public HttpResponse handle(HttpRequest request) {
     HttpResponse response = new HttpResponse("HTTP/1.1", 200, "OK");
 
-    try (InputStream resource = getClass().getResourceAsStream(baseWebappPath + request.getPath())) {
+    String path = webappBasePath + request.getPath();
+
+    if (path.endsWith("/")) {
+      path += DEFAULT_FILE_NAME;
+    }
+
+    File file = new File(path);
+
+    try (InputStream resource = file.exists()
+        ? new FileInputStream(file)
+        : getClass().getResourceAsStream(path)) {
+      if (resource == null) {
+        throw new NotFoundException();
+      }
+
       byte[] body = resource.readAllBytes();
       response.setBody(body);
 
-      String fileExtension = getFileExtension(request.getPath());
+      String fileExtension = getFileExtension(path);
       String contentType = getContentType(fileExtension);
 
       response.addHeader(CONTENT_TYPE, contentType);

@@ -1,5 +1,6 @@
 package ch.ethy.transact.server;
 
+import ch.ethy.transact.log.*;
 import ch.ethy.transact.server.exception.HttpException;
 import ch.ethy.transact.server.exception.InternalServerError;
 import ch.ethy.transact.server.exception.MethodNotAllowedException;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 import static ch.ethy.transact.server.HttpHeader.CONTENT_LENGTH;
 
 public class ConnectionHandler {
+  private static final Logger log = Logger.getLogger(ConnectionHandler.class);
   private final Set<HttpContext> httpContexts;
 
   public ConnectionHandler(Set<HttpContext> httpContexts) {
@@ -67,7 +69,8 @@ public class ConnectionHandler {
       HttpResponse response = requestHandler.handle(request);
       writeHttpResponse(httpConnection, response);
     } catch (Exception e) {
-      HttpException httpException = httpException(e);
+      log.info("An exception occured", e);
+      HttpException httpException = toHttpException(e);
       try {
         writeHttpResponse(httpConnection, createErrorResponse(request, httpException));
       } catch (IOException ioException) {
@@ -82,7 +85,7 @@ public class ConnectionHandler {
     return new HttpResponse(httpVersion, httpException.getCode(), httpException.getMessage());
   }
 
-  private HttpException httpException(Exception e) {
+  private HttpException toHttpException(Exception e) {
     if (e instanceof HttpException) {
       return (HttpException) e;
     }
