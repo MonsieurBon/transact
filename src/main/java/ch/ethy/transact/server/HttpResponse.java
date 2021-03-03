@@ -43,8 +43,12 @@ public class HttpResponse {
     return body;
   }
 
-  public void setBody(String body) {
-    this.body = body.getBytes(StandardCharsets.UTF_8);
+  public void setBody(byte[] body) {
+    this.body = body;
     this.headers.put(CONTENT_LENGTH, String.valueOf(this.body.length));
+  }
+
+  public void setBody(String body) {
+    setBody(body.getBytes(StandardCharsets.UTF_8));
   }
 }

@@ -1,17 +1,26 @@
 package ch.ethy.transact;
 
-import ch.ethy.transact.server.HttpResponse;
-import ch.ethy.transact.server.Server;
+import ch.ethy.transact.server.*;
 
-import java.io.IOException;
+import java.io.*;
 
-import static ch.ethy.transact.server.HttpHeader.CONTENT_TYPE;
-import static ch.ethy.transact.server.HttpMethod.GET;
+import static ch.ethy.transact.server.HttpMethod.*;
 
 public class Transact {
-  public static void main(String[] args) throws IOException {
+  private RequestHandler staticResourcesHandler;
 
-//    InetSocketAddress addr = new InetSocketAddress(8080);
+  public static void main(String[] args) throws IOException {
+    Transact app = new Transact();
+    app.setup();
+    app.run();
+  }
+
+  private void setup() {
+//    staticResourcesHandler = new StaticResourcesHandler("/webapp");
+  }
+
+  private void run() {
+    //    InetSocketAddress addr = new InetSocketAddress(8080);
 //    HttpServer server = HttpServer.create(addr, 0);
 //    server.createContext("/", exchange -> {
 //
@@ -19,14 +28,7 @@ public class Transact {
 //    server.start();
 
     Server server = Server.onPort(8080)
-        .addHandler("/", GET, request -> {
-          HttpResponse response = new HttpResponse(request.getHttpVersion(), 200, "OK");
-
-          response.setBody("{\"foo\": 42}");
-          response.addHeader(CONTENT_TYPE, "application/json");
-
-          return response;
-        })
+        .addHandler("/", GET, staticResourcesHandler)
         .create();
 
     server.start();
