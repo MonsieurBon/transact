@@ -1,6 +1,7 @@
 package ch.ethy.transact.server;
 
 import ch.ethy.transact.log.Logger;
+import ch.ethy.transact.server.exception.*;
 
 import java.net.Socket;
 import java.util.Set;
@@ -20,9 +21,12 @@ public class ServerWorker implements Runnable {
   public void run() {
     try (httpConnection) {
       this.connectionHandler.handle(httpConnection);
-    } catch (Exception e) {
+    } catch (InternalServerError e) {
       String message = "An exception occurred while handling incoming HTTP connection";
       LOG.error(message, e);
+    } catch (Exception e) {
+      String message = "A non 200 response will be sent to the client";
+      LOG.debug(message, e);
     }
   }
 }

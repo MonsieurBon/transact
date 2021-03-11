@@ -1,26 +1,14 @@
 package ch.ethy.transact.server;
 
-import ch.ethy.transact.log.*;
-import ch.ethy.transact.server.exception.HttpException;
-import ch.ethy.transact.server.exception.InternalServerError;
-import ch.ethy.transact.server.exception.MethodNotAllowedException;
-import ch.ethy.transact.server.exception.NotFoundException;
+import ch.ethy.transact.server.exception.*;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.stream.Collectors;
+import java.io.*;
+import java.util.*;
+import java.util.stream.*;
 
-import static ch.ethy.transact.server.HttpHeader.CONTENT_LENGTH;
+import static ch.ethy.transact.server.HttpHeader.*;
 
 public class ConnectionHandler {
-  private static final Logger log = Logger.getLogger(ConnectionHandler.class);
   private final Set<HttpContext> httpContexts;
 
   public ConnectionHandler(Set<HttpContext> httpContexts) {
@@ -69,7 +57,6 @@ public class ConnectionHandler {
       HttpResponse response = requestHandler.handle(request);
       writeHttpResponse(httpConnection, response);
     } catch (Exception e) {
-      log.info("An exception occured", e);
       HttpException httpException = toHttpException(e);
       try {
         writeHttpResponse(httpConnection, createErrorResponse(request, httpException));
