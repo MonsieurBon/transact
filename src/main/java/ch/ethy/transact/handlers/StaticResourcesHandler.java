@@ -44,7 +44,7 @@ public class StaticResourcesHandler implements RequestHandler {
 
       response.addHeader(CONTENT_TYPE, contentType);
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new InternalServerError(e);
     }
 
     return response;
