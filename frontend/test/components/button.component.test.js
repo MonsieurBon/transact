@@ -1,5 +1,5 @@
 import { fixture } from '@open-wc/testing-helpers';
-import Button from '../src/components/button.js';
+import Button from '../../src/components/button.component.js';
 
 describe('Button', () => {
   beforeAll(() => {

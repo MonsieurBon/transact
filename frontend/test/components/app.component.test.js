@@ -1,5 +1,5 @@
 import { fixture } from '@open-wc/testing-helpers';
-import App from '../src/components/app';
+import App from '../../src/components/app.component.js';
 
 describe('App', () => {
   beforeAll(() => {
