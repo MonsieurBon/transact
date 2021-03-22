@@ -29,6 +29,6 @@ export default class UserInfo extends HTMLElement {
   }
 
   render() {
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
+    this.shadowRoot.append(template.content.cloneNode(true));
   }
 }

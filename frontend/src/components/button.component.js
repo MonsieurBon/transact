@@ -38,6 +38,6 @@ export default class Button extends HTMLElement {
   }
 
   render() {
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
+    this.shadowRoot.append(template.content.cloneNode(true));
   }
 }
