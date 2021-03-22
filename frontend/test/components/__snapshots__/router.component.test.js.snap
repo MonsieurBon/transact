@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Router component should render 1`] = `
+"
+<style>
+  :host {
+    contain: content;
+  }
+  
+  slot {
+    display: none;
+  }
+</style>
+<div id=\\"router-outlet\\"></div>
+<slot>
+</slot>"
+`;
+
+exports[`Router component should render the current path 1`] = `
+"
+<style>
+  :host {
+    contain: content;
+  }
+  
+  slot {
+    display: none;
+  }
+</style>
+<div id=\\"router-outlet\\"><div data-route=\\"/foo\\"></div></div>
+<slot>
+</slot>"
+`;
+
+exports[`Router component should replace the rendered node 1`] = `
+"
+<style>
+  :host {
+    contain: content;
+  }
+  
+  slot {
+    display: none;
+  }
+</style>
+<div id=\\"router-outlet\\"><div data-route=\\"/foo\\"></div></div>
+<slot>
+</slot>"
+`;
+
+exports[`Router component should replace the rendered node 2`] = `
+"
+<style>
+  :host {
+    contain: content;
+  }
+  
+  slot {
+    display: none;
+  }
+</style>
+<div id=\\"router-outlet\\"><div data-route=\\"/bar\\"></div></div>
+<slot>
+</slot>"
+`;

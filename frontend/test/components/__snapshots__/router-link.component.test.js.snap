@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RouterLink should render 1`] = `
+<a
+  href="/foo"
+  is="router-link"
+>
+  link text
+</a>
+`;
