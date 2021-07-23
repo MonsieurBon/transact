@@ -47,7 +47,13 @@ template.innerHTML = `
 </div>
 <div class='main'>
   <div class='side'></div>
-  <div class='content'></div>
+  <div class='content'>
+    <t-router default-route="/">
+      <div data-route="/foo"></div>
+      <div data-route="/bar"></div>
+      <div data-route="/"></div>
+    </t-router>
+  </div>
 </div>
 `;
 
