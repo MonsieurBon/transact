@@ -54,11 +54,11 @@ public class JsonSerializer {
           try {
             String propertyName = field.getName();
             String propertyValue = doSerialize(field.get(input));
-            return String.format("\"%s\": %s", propertyName, propertyValue);
+            return String.format("\"%s\":%s", propertyName, propertyValue);
           } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
           }
-        }).collect(joining(", "));
+        }).collect(joining(","));
 
     jsonBuilder.append(properties);
 
@@ -79,7 +79,7 @@ public class JsonSerializer {
 
     String objects = input.stream()
         .map(this::doSerialize)
-        .collect(joining(", "));
+        .collect(joining(","));
 
     jsonBuilder.append(objects);
 

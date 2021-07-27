@@ -111,7 +111,7 @@ class JsonSerializerTest {
     Collection<Object> input = Arrays.asList(true, false, "foo", 42, -42.24, null);
 
     String json = new JsonSerializer(input).serialize();
-    assertEquals("[true, false, \"foo\", 42, -42.24, null]", json);
+    assertEquals("[true,false,\"foo\",42,-42.24,null]", json);
   }
 
   @Test
@@ -123,7 +123,7 @@ class JsonSerializerTest {
     input.add(nested);
 
     String json = new JsonSerializer(input).serialize();
-    assertEquals("[\"foo\", [\"bar\"]]", json);
+    assertEquals("[\"foo\",[\"bar\"]]", json);
   }
 
   @Test
@@ -131,7 +131,7 @@ class JsonSerializerTest {
     Object input = new TestObject();
 
     String json = new JsonSerializer(input).serialize();
-    assertEquals("{\"stringProp\": \"myString\", \"boolProp\": false, \"nullProp\": null, \"numberProp\": 123.456, \"objectProp\": null, \"listProp\": null, \"parentProperty\": \"parentString\"}", json);
+    assertEquals("{\"stringProp\":\"myString\",\"boolProp\":false,\"nullProp\":null,\"numberProp\":123.456,\"objectProp\":null,\"listProp\":null,\"parentProperty\":\"parentString\"}", json);
   }
 
   @Test
@@ -140,7 +140,7 @@ class JsonSerializerTest {
     input.objectProp = new NestedObject();
 
     String json = new JsonSerializer(input).serialize();
-    assertEquals("{\"stringProp\": \"myString\", \"boolProp\": false, \"nullProp\": null, \"numberProp\": 123.456, \"objectProp\": {\"nestedProperty\": \"nestedString\"}, \"listProp\": null, \"parentProperty\": \"parentString\"}", json);
+    assertEquals("{\"stringProp\":\"myString\",\"boolProp\":false,\"nullProp\":null,\"numberProp\":123.456,\"objectProp\":{\"nestedProperty\":\"nestedString\"},\"listProp\":null,\"parentProperty\":\"parentString\"}", json);
   }
 
   @Test
@@ -148,7 +148,7 @@ class JsonSerializerTest {
     Collection<Object> input = Arrays.asList("foo", new TestObject(), "bar");
 
     String json = new JsonSerializer(input).serialize();
-    assertEquals("[\"foo\", {\"stringProp\": \"myString\", \"boolProp\": false, \"nullProp\": null, \"numberProp\": 123.456, \"objectProp\": null, \"listProp\": null, \"parentProperty\": \"parentString\"}, \"bar\"]", json);
+    assertEquals("[\"foo\",{\"stringProp\":\"myString\",\"boolProp\":false,\"nullProp\":null,\"numberProp\":123.456,\"objectProp\":null,\"listProp\":null,\"parentProperty\":\"parentString\"},\"bar\"]", json);
   }
 
   @Test
@@ -157,7 +157,7 @@ class JsonSerializerTest {
     input.listProp = List.of("foo", "bar");
 
     String json = new JsonSerializer(input).serialize();
-    assertEquals("{\"stringProp\": \"myString\", \"boolProp\": false, \"nullProp\": null, \"numberProp\": 123.456, \"objectProp\": null, \"listProp\": [\"foo\", \"bar\"], \"parentProperty\": \"parentString\"}", json);
+    assertEquals("{\"stringProp\":\"myString\",\"boolProp\":false,\"nullProp\":null,\"numberProp\":123.456,\"objectProp\":null,\"listProp\":[\"foo\",\"bar\"],\"parentProperty\":\"parentString\"}", json);
   }
 
   @SuppressWarnings({"FieldMayBeFinal", "unused"})
