@@ -54,7 +54,11 @@ public class ConnectionHandler {
             throw new MethodNotAllowedException();
           });
 
-      HttpResponse response = requestHandler.handle(request);
+      HttpResponse response = new HttpResponse("HTTP/1.1", 200, "OK");
+
+      Object body = requestHandler.handle(request, response);
+
+      writeBodyToResponse(response, body);
       writeHttpResponse(httpConnection, response);
     } catch (Exception e) {
       HttpException httpException = toHttpException(e);
@@ -64,6 +68,26 @@ public class ConnectionHandler {
         throw httpException;
       }
       throw httpException;
+    }
+  }
+
+  private void writeBodyToResponse(HttpResponse response, Object body) throws IOException {
+    if (body == null) {
+      response.setBody("");
+    } else if (body instanceof byte[]) {
+      response.setBody((byte[]) body);
+    } else if (body instanceof String) {
+      response.setBody((String) body);
+    } else {
+      response.setBody(serializeBody(body));
+    }
+  }
+
+  private byte[] serializeBody(Object body) throws IOException {
+    try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(bos)) {
+      out.writeObject(body);
+      out.flush();
+      return bos.toByteArray();
     }
   }
 
@@ -142,7 +166,7 @@ public class ConnectionHandler {
 
   private void writeHeaders(HttpConnection httpConnection, HttpResponse response) throws IOException {
     PrintWriter headerWriter = httpConnection.getHeaderWriter();
-    String responseLine = String.join(" ", response.getHttpVersion(), Integer.toString(response.getCode()), response.getMessage());
+    String responseLine = String.join(" ", response.getHttpVersion(), Integer.toString(response.getStatus()), response.getMessage());
     headerWriter.println(responseLine);
 
     response.getHeaders().entrySet().stream()

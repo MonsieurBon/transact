@@ -1,5 +1,5 @@
 package ch.ethy.transact.server;
 
 public interface RequestHandler {
-  HttpResponse handle(HttpRequest request);
+  Object handle(HttpRequest request, HttpResponse response);
 }

@@ -8,14 +8,14 @@ import static ch.ethy.transact.server.HttpHeader.CONTENT_LENGTH;
 
 public class HttpResponse {
   private final String httpVersion;
-  private final int code;
-  private final String message;
   private final Map<String, String> headers = new HashMap<>();
+  private int status;
+  private String message;
   private byte[] body = {};
 
-  public HttpResponse(String httpVersion, int code, String message) {
+  public HttpResponse(String httpVersion, int status, String message) {
     this.httpVersion = httpVersion;
-    this.code = code;
+    this.status = status;
     this.message = message;
   }
 
@@ -23,12 +23,20 @@ public class HttpResponse {
     return httpVersion;
   }
 
-  public int getCode() {
-    return code;
+  public int getStatus() {
+    return status;
+  }
+
+  public void setStatus(int status) {
+    this.status = status;
   }
 
   public String getMessage() {
     return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
   }
 
   public Map<String, String> getHeaders() {
@@ -43,12 +51,12 @@ public class HttpResponse {
     return body;
   }
 
-  public void setBody(byte[] body) {
+  void setBody(byte[] body) {
     this.body = body;
     this.headers.put(CONTENT_LENGTH, String.valueOf(this.body.length));
   }
 
-  public void setBody(String body) {
+  void setBody(String body) {
     setBody(body.getBytes(StandardCharsets.UTF_8));
   }
 }

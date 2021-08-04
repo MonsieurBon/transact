@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static ch.ethy.transact.server.HttpHeader.*;
 import static ch.ethy.transact.server.HttpMethod.GET;
 import static ch.ethy.transact.server.HttpMethod.POST;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -134,19 +135,106 @@ public class ConnectionHandlerTest {
   }
 
   @Test
+  public void createsHttpResponseObjectAndPassesItToHandler() {
+    MockHttpConnection connection = new MockHttpConnection(GET, "/");
+    MockRequestHandler handler = new MockRequestHandler();
+    Set<HttpContext> contexts = new HashSet<>();
+    contexts.add(new HttpContext("/", GET, handler));
+
+    ConnectionHandler connectionHandler = new ConnectionHandler(contexts);
+    connectionHandler.handle(connection);
+
+    HttpResponse response = handler.response;
+    assertNotNull(response);
+    assertEquals("HTTP/1.1", response.getHttpVersion());
+    assertEquals(200, response.getStatus());
+    assertEquals("OK", response.getMessage());
+  }
+
+  @Test
+  public void setsReturnedByteArrayAsBodyOnHttpResponse() {
+    byte[] body = new byte[]{51, -45, 51, 62, 86};
+
+    MockHttpConnection connection = new MockHttpConnection(GET, "/");
+    MockRequestHandler handler = new MockRequestHandler(body);
+    Set<HttpContext> contexts = new HashSet<>();
+    contexts.add(new HttpContext("/", GET, handler));
+
+    ConnectionHandler connectionHandler = new ConnectionHandler(contexts);
+    connectionHandler.handle(connection);
+
+    HttpResponse response = handler.response;
+    assertEquals(1, response.getHeaders().size());
+    assertEquals("5", response.getHeaders().get(CONTENT_LENGTH));
+    assertEquals(body, response.getBody());
+  }
+
+  @Test
+  public void setsReturnedStringAsBodyOnHttpResponse() {
+    String body = "body";
+
+    MockHttpConnection connection = new MockHttpConnection(GET, "/");
+    MockRequestHandler handler = new MockRequestHandler(body);
+    Set<HttpContext> contexts = new HashSet<>();
+    contexts.add(new HttpContext("/", GET, handler));
+
+    ConnectionHandler connectionHandler = new ConnectionHandler(contexts);
+    connectionHandler.handle(connection);
+
+    HttpResponse response = handler.response;
+    assertEquals(1, response.getHeaders().size());
+    assertEquals("4", response.getHeaders().get(CONTENT_LENGTH));
+    assertEquals(body, new String(response.getBody()));
+  }
+
+  @Test
+  public void serializesAndSetsReturnedObjectAsBodyOnHttpResponse() {
+    Object body = new int[]{42};
+
+    MockHttpConnection connection = new MockHttpConnection(GET, "/");
+    MockRequestHandler handler = new MockRequestHandler(body);
+    Set<HttpContext> contexts = new HashSet<>();
+    contexts.add(new HttpContext("/", GET, handler));
+
+    ConnectionHandler connectionHandler = new ConnectionHandler(contexts);
+    connectionHandler.handle(connection);
+
+    HttpResponse response = handler.response;
+    assertEquals(1, response.getHeaders().size());
+    assertEquals("31", response.getHeaders().get(CONTENT_LENGTH));
+    byte[] expectedHttpResponseBody = {-84, -19, 0, 5, 117, 114, 0, 2, 91, 73, 77, -70, 96, 38, 118, -22, -78, -91, 2, 0, 0, 120, 112, 0, 0, 0, 1, 0, 0, 0, 42};
+    assertArrayEquals(expectedHttpResponseBody, response.getBody());
+  }
+
+  @Test
+  public void ignoresNullResponse() {
+    MockHttpConnection connection = new MockHttpConnection(GET, "/");
+    MockRequestHandler handler = new MockRequestHandler();
+    Set<HttpContext> contexts = new HashSet<>();
+    contexts.add(new HttpContext("/", GET, handler));
+
+    ConnectionHandler connectionHandler = new ConnectionHandler(contexts);
+    connectionHandler.handle(connection);
+
+    HttpResponse response = handler.response;
+    assertEquals(1, response.getHeaders().size());
+    assertEquals("0", response.getHeaders().get(CONTENT_LENGTH));
+    assertArrayEquals(new byte[0], response.getBody());
+  }
+
+  @Test
   public void writesHttpResponseToOutputStream() {
     MockHttpConnection connection = new MockHttpConnection(GET, "/");
     Set<HttpContext> contexts = new HashSet<>();
-    contexts.add(new HttpContext("/", GET, request -> {
-      HttpResponse response = new HttpResponse("HTTP/1.1", 123, "Foobar");
+    contexts.add(new HttpContext("/", GET, (request, response) -> {
+      response.setStatus(123);
+      response.setMessage("Foobar");
 
       response.addHeader("Header1", "value1");
       response.addHeader("Header2", "value2");
       response.addHeader("Header3", "value3");
 
-      response.setBody("Body");
-
-      return response;
+      return "Body";
     }));
 
     ConnectionHandler connectionHandler = new ConnectionHandler(contexts);
@@ -170,7 +258,7 @@ public class ConnectionHandlerTest {
   public void throws500InternalServerErrorIfSomethingGoesWrong() {
     MockHttpConnection connection = new MockHttpConnection(GET, "/");
     Set<HttpContext> contexts = new HashSet<>();
-    contexts.add(new HttpContext("/", GET, request -> {
+    contexts.add(new HttpContext("/", GET, (request, response) -> {
       throw new RuntimeException();
     }));
 
@@ -197,21 +285,28 @@ public class ConnectionHandlerTest {
   }
 
   private static class MockRequestHandler implements RequestHandler {
+    private final Object body;
     private boolean hasBeenCalled = false;
     private HttpRequest request;
+    private HttpResponse response;
 
     private MockRequestHandler() {
+      this(null);
+    }
 
+    private MockRequestHandler(Object body) {
+      this.body = body;
     }
 
     @Override
-    public HttpResponse handle(HttpRequest request) {
+    public Object handle(HttpRequest request, HttpResponse response) {
       if (hasBeenCalled) {
         throw new IllegalStateException();
       }
       hasBeenCalled = true;
       this.request = request;
-      return new HttpResponse("HTTP/1.1", 200, "OK");
+      this.response = response;
+      return this.body;
     }
   }
 

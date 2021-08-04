@@ -18,9 +18,7 @@ public class StaticResourcesHandler implements RequestHandler {
   }
 
   @Override
-  public HttpResponse handle(HttpRequest request) {
-    HttpResponse response = new HttpResponse("HTTP/1.1", 200, "OK");
-
+  public byte[] handle(HttpRequest request, HttpResponse response) {
     String path = webappBasePath + request.getPath();
 
     if (path.endsWith("/")) {
@@ -37,17 +35,16 @@ public class StaticResourcesHandler implements RequestHandler {
       }
 
       byte[] body = resource.readAllBytes();
-      response.setBody(body);
 
       String fileExtension = getFileExtension(path);
       String contentType = getContentType(fileExtension);
 
       response.addHeader(CONTENT_TYPE, contentType);
+
+      return body;
     } catch (IOException e) {
       throw new InternalServerError(e);
     }
-
-    return response;
   }
 
   private String getFileExtension(String path) {
