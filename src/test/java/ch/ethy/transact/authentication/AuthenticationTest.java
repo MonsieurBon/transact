@@ -34,9 +34,9 @@ public class AuthenticationTest {
 
   @Test
   public void authenticating_creates_valid_jwt_token() {
-    String jwt = service.authenticate("username", "password");
+    Token jwt = service.authenticate("username", "password");
 
-    String[] jwtParts = jwt.split("\\.", 3);
+    String[] jwtParts = jwt.getToken().split("\\.", 3);
     String header = jwtParts[0];
     String payload = jwtParts[1];
     String signature = jwtParts[2];
@@ -51,9 +51,9 @@ public class AuthenticationTest {
 
   @Test
   public void jwt_has_valid_signature() throws Exception {
-    String jwt = service.authenticate("username", "password");
+    Token jwt = service.authenticate("username", "password");
 
-    String[] jwtParts = jwt.split("\\.", 3);
+    String[] jwtParts = jwt.getToken().split("\\.", 3);
     String header = jwtParts[0];
     String payload = jwtParts[1];
     String signature = jwtParts[2];
@@ -69,9 +69,9 @@ public class AuthenticationTest {
 
   @Test
   public void jwt_has_valid_header() {
-    String jwt = service.authenticate("username", "password");
+    Token jwt = service.authenticate("username", "password");
 
-    String[] jwtParts = jwt.split("\\.", 3);
+    String[] jwtParts = jwt.getToken().split("\\.", 3);
     JwtHeader header = new JsonParser(decodeToString(jwtParts[0])).parse(JwtHeader.class);
 
     assertEquals("JWT", header.getType());
@@ -80,15 +80,23 @@ public class AuthenticationTest {
 
   @Test
   public void jwt_has_valid_payload() {
-    String jwt = service.authenticate("username", "password");
+    Token jwt = service.authenticate("username", "password");
 
-    String[] jwtParts = jwt.split("\\.", 3);
+    String[] jwtParts = jwt.getToken().split("\\.", 3);
     JwtPayload payload = new JsonParser(decodeToString(jwtParts[1])).parse(JwtPayload.class);
 
     assertEquals("username", payload.getSubject());
     assertEquals(1623352215L, payload.getIssuedAt());
     assertEquals(1623353415L, payload.getExpirationTime());
     assertEquals("b366f5e7-8d00-4475-b022-3f1c765ebae1", payload.getJwtId());
+  }
+
+  @Test
+  public void token_expiration_is_returned_correctly() {
+    Token jwt = service.authenticate("username", "password");
+    long validity = jwt.getValidity();
+
+    assertEquals(1200L, validity);
   }
 
   @Test

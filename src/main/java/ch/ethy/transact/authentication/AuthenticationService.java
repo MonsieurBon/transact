@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.stream.*;
 
 import static ch.ethy.transact.authentication.Base64.*;
+import static java.time.temporal.ChronoUnit.*;
 
 public class AuthenticationService {
   private static final List<AlgorithmsMapping> JWT_JAVA_ALGS = List.of(
@@ -51,7 +52,7 @@ public class AuthenticationService {
     }
   }
 
-  public String authenticate(String username, String password) {
+  public Token authenticate(String username, String password) {
     SecurityUser user = userProvider.getByUsername(username);
 
     if (user != null && passwordIsValid(user, password)) {
@@ -133,7 +134,7 @@ public class AuthenticationService {
     }
   }
 
-  private String createToken(Object subject) {
+  private Token createToken(Object subject) {
     String jwtAlg = JWT_JAVA_ALGS.get(0).jwt;
     String javaAlg = JWT_JAVA_ALGS.get(0).java;
 
@@ -150,7 +151,10 @@ public class AuthenticationService {
 
     String signature = calculateSignature(javaAlg, header, payload);
 
-    return String.format("%s.%s.%s", header, payload, signature);
+    String token = String.format("%s.%s.%s", header, payload, signature);
+    long validity = SECONDS.between(issuedAt, expirationTime);
+
+    return new Token(token, validity);
   }
 
   private String calculateSignature(String algorithm, String header, String payload) {
