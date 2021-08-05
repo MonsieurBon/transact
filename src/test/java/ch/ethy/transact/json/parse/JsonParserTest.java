@@ -18,6 +18,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class JsonParserTest {
   @Test
   public void parseNull() {
+    String input = null;
+
+    TestObject obj = new JsonParser(input).parse(TestObject.class);
+    assertNull(obj);
+  }
+
+  @Test
+  public void parseEmptyString() {
+    String input = "";
+
+    TestObject obj = new JsonParser(input).parse(TestObject.class);
+    assertNull(obj);
+  }
+
+  @Test
+  public void parseStringNull() {
     String input = "null";
 
     Object obj = new JsonParser(input).parse();

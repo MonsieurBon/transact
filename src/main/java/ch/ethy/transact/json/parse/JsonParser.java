@@ -1,41 +1,24 @@
 package ch.ethy.transact.json.parse;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.lang.reflect.*;
+import java.util.*;
 
-import static ch.ethy.transact.json.SpecialCharacters.BACKSLASH;
-import static ch.ethy.transact.json.SpecialCharacters.CLOSING_BRACES;
-import static ch.ethy.transact.json.SpecialCharacters.CLOSING_BRACKETS;
-import static ch.ethy.transact.json.SpecialCharacters.COLON;
-import static ch.ethy.transact.json.SpecialCharacters.COMMA;
-import static ch.ethy.transact.json.SpecialCharacters.DOUBLE_QUOTES;
-import static ch.ethy.transact.json.SpecialCharacters.ESCAPED_CHARS;
-import static ch.ethy.transact.json.SpecialCharacters.LITERAL_TERMINATING;
-import static ch.ethy.transact.json.SpecialCharacters.OPENING_BRACES;
-import static ch.ethy.transact.json.SpecialCharacters.OPENING_BRACKETS;
-import static ch.ethy.transact.json.SpecialCharacters.SPACE;
-import static java.util.stream.Collectors.toList;
+import static ch.ethy.transact.json.SpecialCharacters.*;
+import static java.util.stream.Collectors.*;
 
 public class JsonParser {
   private final String input;
   private int position = 0;
 
   public JsonParser(String input) {
-    this.input = input.trim();
+    this.input = input != null ? input.trim() : null;
   }
 
   public Object parse() {
+    if (input == null || input.length() == 0) {
+      return null;
+    }
+
     Object result = parseValue();
 
     if (position < input.length()) {
@@ -208,6 +191,10 @@ public class JsonParser {
   public <T> T parse(Class<T> clazz) {
     @SuppressWarnings("unchecked")
     Map<String, Object> propertiesMap = (Map<String, Object>) parse();
+
+    if (propertiesMap == null) {
+      return null;
+    }
 
     Map<Class<?>, Map<String, Class<?>>> genericsInformation = getGenericsInformation(clazz, Collections.emptyMap());
 
