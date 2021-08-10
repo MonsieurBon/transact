@@ -7,9 +7,9 @@ import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.nio.charset.*;
 import java.security.*;
-import java.security.spec.*;
 import java.time.*;
 import java.util.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 import static ch.ethy.transact.authentication.Base64.*;
@@ -23,28 +23,31 @@ public class AuthenticationService {
   private final Map<String, Mac> macs = new HashMap<>();
 
   private final DateTimeProvider dateTimeProvider;
-  private final UUIDProvider uuidProvider;
+  private final Supplier<UUID> uuidSupplier;
   private final UserProvider userProvider;
+  private final BiPredicate<String, String> passwordVerifier;
 
   private Set<TokenRevokation> revokedTokens = new HashSet<>();
 
   public AuthenticationService(
       DateTimeProvider dateTimeProvider,
-      UUIDProvider uuidProvider,
+      Supplier<UUID> uuidProvider,
       UserProvider userProvider,
-      String key
+      BiPredicate<String, String> passwordVerifier,
+      byte[] key
   ) {
     this.dateTimeProvider = dateTimeProvider;
-    this.uuidProvider = uuidProvider;
+    this.uuidSupplier = uuidProvider;
     this.userProvider = userProvider;
+    this.passwordVerifier = passwordVerifier;
 
     JWT_JAVA_ALGS.forEach(alg -> macs.put(alg.java, createMac(alg.java, key)));
   }
 
-  private Mac createMac(String algorithm, String key) {
+  private Mac createMac(String algorithm, byte[] key) {
     try {
       Mac mac = Mac.getInstance(algorithm);
-      SecretKeySpec secret_key = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), algorithm);
+      SecretKeySpec secret_key = new SecretKeySpec(key, algorithm);
       mac.init(secret_key);
       return mac;
     } catch (NoSuchAlgorithmException | InvalidKeyException e) {
@@ -55,7 +58,7 @@ public class AuthenticationService {
   public Token authenticate(String username, String password) {
     SecurityUser user = userProvider.getByUsername(username);
 
-    if (user != null && passwordIsValid(user, password)) {
+    if (user != null && passwordIsValid(user.getPassword(), password)) {
       return createToken(user.getId());
     }
 
@@ -120,18 +123,8 @@ public class AuthenticationService {
         .orElse(JWT_JAVA_ALGS.get(0).java);
   }
 
-  private boolean passwordIsValid(SecurityUser user, String password) {
-    try {
-      byte[] salt = decode(user.getSalt());
-
-      KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
-      SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-      String encodedPassword = encode(factory.generateSecret(spec).getEncoded());
-
-      return user.getPassword().equals(encodedPassword);
-    } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
+  private boolean passwordIsValid(String hash, String password) {
+    return this.passwordVerifier.test(hash, password);
   }
 
   private Token createToken(Object subject) {
@@ -144,7 +137,7 @@ public class AuthenticationService {
     ZonedDateTime issuedAt = dateTimeProvider.now();
     ZonedDateTime expirationTime = issuedAt.plusMinutes(20);
     JwtPayload jwtPayload = JwtPayload.forSubject(subject)
-        .withJwtId(uuidProvider.getUuid().toString())
+        .withJwtId(uuidSupplier.get().toString())
         .issuedAt(issuedAt.toEpochSecond())
         .expiringAt(expirationTime.toEpochSecond());
     String payload = encode(new JsonSerializer(jwtPayload).serialize());

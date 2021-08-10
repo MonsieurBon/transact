@@ -9,12 +9,14 @@ import java.nio.charset.*;
 import java.time.*;
 import java.util.*;
 
-import static ch.ethy.transact.authentication.AuthenticationTest.MockUserBuilder.*;
+import static ch.ethy.transact.authentication.AuthenticationServiceTest.MockUserBuilder.*;
 import static ch.ethy.transact.authentication.Base64.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AuthenticationTest {
+public class AuthenticationServiceTest {
+  private static final byte[] KEY = {-42, 0, 42};
   private AuthenticationService service;
+  private Boolean isPasswordValid = true;
 
   @BeforeEach
   public void setup() {
@@ -28,7 +30,8 @@ public class AuthenticationTest {
         () -> now,
         () -> UUID.fromString("b366f5e7-8d00-4475-b022-3f1c765ebae1"),
         userProvider,
-        "foobar"
+        (s, s2) -> isPasswordValid,
+        KEY
     );
   }
 
@@ -59,7 +62,7 @@ public class AuthenticationTest {
     String signature = jwtParts[2];
 
     Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-    SecretKeySpec secret_key = new SecretKeySpec("foobar".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    SecretKeySpec secret_key = new SecretKeySpec(KEY, "HmacSHA256");
     sha256_HMAC.init(secret_key);
     String input = String.format("%s.%s", header, payload);
     byte[] hash = sha256_HMAC.doFinal(input.getBytes(StandardCharsets.UTF_8));
@@ -106,12 +109,13 @@ public class AuthenticationTest {
 
   @Test
   public void authenticate_throws_invalid_credentials_for_bad_password() {
+    isPasswordValid = false;
     assertThrows(InvalidCredentialsException.class, () -> service.authenticate("username", "bad_password"));
   }
 
   @Test
   public void verifyToken_accepts_valid_token() {
-    String token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJiMzY2ZjVlNy04ZDAwLTQ0NzUtYjAyMi0zZjFjNzY1ZWJhZTEiLCJzdWIiOiJ1c2VybmFtZSIsImlhdCI6MTYyMzM1MjIxNSwiZXhwIjoxNjIzMzUzNDE1fQ.Q7uDtWoXhZpyKtwcWYzuPniOShmSyY2l14Bj64Vipeo";
+    String token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJiMzY2ZjVlNy04ZDAwLTQ0NzUtYjAyMi0zZjFjNzY1ZWJhZTEiLCJzdWIiOiJ1c2VybmFtZSIsImlhdCI6MTYyMzM1MjIxNSwiZXhwIjoxNjIzMzUzNDE1fQ.4pHNIoiIORO1GieP1wQ7M6h7zDQ5z1JD53C9b-QuzsQ";
     assertTrue(service.verifyToken(token));
   }
 
@@ -152,12 +156,10 @@ public class AuthenticationTest {
   public static class MockUser implements SecurityUser {
     private final String username;
     private final String password;
-    private final String salt;
 
-    public MockUser(String username, String password, String salt) {
+    public MockUser(String username, String password) {
       this.username = username;
       this.password = password;
-      this.salt = salt;
     }
 
     @Override
@@ -169,17 +171,11 @@ public class AuthenticationTest {
     public String getPassword() {
       return password;
     }
-
-    @Override
-    public String getSalt() {
-      return salt;
-    }
   }
 
   public static class MockUserBuilder {
     private String username = "username";
-    private String password = "yr_sFLrkNY3uGuM1BoMkHw";
-    private String salt = "RX5KhHIKHEjyhk567h54mg";
+    private String password = "password_hash";
 
     public static MockUserBuilder aUser() {
       return new MockUserBuilder();
@@ -195,13 +191,8 @@ public class AuthenticationTest {
       return this;
     }
 
-    public MockUserBuilder setSalt(String salt) {
-      this.salt = salt;
-      return this;
-    }
-
-    public AuthenticationTest.MockUser build() {
-      return new AuthenticationTest.MockUser(username, password, salt);
+    public AuthenticationServiceTest.MockUser build() {
+      return new AuthenticationServiceTest.MockUser(username, password);
     }
   }
 }
