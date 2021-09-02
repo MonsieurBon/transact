@@ -1,7 +1,9 @@
 package ch.ethy.transact;
 
+import ch.ethy.transact.account.*;
 import ch.ethy.transact.authentication.*;
 import ch.ethy.transact.handlers.*;
+import ch.ethy.transact.handlers.AccountHandler.*;
 import ch.ethy.transact.handlers.AuthenticationHandler.*;
 import ch.ethy.transact.log.*;
 import ch.ethy.transact.security.*;
@@ -21,8 +23,9 @@ public class Transact {
   private static final String WEBAPP_BASE_PATH_OPTION = "--webappBasePath";
   private static final String WEBAPP_BASE_PATH_DEFAULT = "/webapp";
 
-  private StaticResourcesHandler staticResourcesHandler;
+  private AccountHandler accountHandler;
   private AuthenticationHandler authenticationHandler;
+  private StaticResourcesHandler staticResourcesHandler;
 
   public static void main(String[] args) {
     Transact app = new Transact();
@@ -53,10 +56,14 @@ public class Transact {
     final byte[] serverKey = generateRandomKey();
     Function<String, String> passwordHasher = passwordHasher(120000, 128, 64);
     BiPredicate<String, String> passwordVerifier = passwordVerifier();
+    Supplier<UUID> uuidSupplier = UUID::randomUUID;
 
-    UserProvider userProvider = username -> null;
-    AuthenticationService authenticationService = new AuthenticationService(ZonedDateTime::now, UUID::randomUUID, userProvider, passwordVerifier, serverKey);
+    UserRepository userRepository = new UserRepository();
 
+    AccountService accountService = new AccountService(userRepository, uuidSupplier, passwordHasher);
+    AuthenticationService authenticationService = new AuthenticationService(ZonedDateTime::now, UUID::randomUUID, userRepository, passwordVerifier, serverKey);
+
+    accountHandler = new AccountHandler(accountService);
     authenticationHandler = new AuthenticationHandler(authenticationService);
     staticResourcesHandler = new StaticResourcesHandler(webappBasePath);
   }
@@ -65,6 +72,7 @@ public class Transact {
     Server server = Server.onPort(8080)
         .addHandler("/", GET, staticResourcesHandler)
         .addHandler("/login", POST, asJson(fromJson((req, res, credentials) -> authenticationHandler.login(credentials), Credentials.class)))
+        .addHandler("/register", PUT, asJson(fromJson((req, res, userDetails) -> accountHandler.register(res, userDetails), UserDetails.class)))
         .create();
 
     server.start();

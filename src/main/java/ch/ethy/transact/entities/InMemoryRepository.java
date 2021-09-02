@@ -3,7 +3,7 @@ package ch.ethy.transact.entities;
 import java.util.*;
 
 public class InMemoryRepository<T extends Entity> implements Repository<T> {
-  private final Map<String, T> entities = new HashMap<>();
+  protected final Map<String, T> entities = new HashMap<>();
 
   @Override
   public void add(T entity) {

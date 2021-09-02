@@ -5,7 +5,8 @@ import ch.ethy.transact.server.exception.MethodNotAllowedException;
 public enum HttpMethod {
   HEAD,
   GET,
-  POST;
+  POST,
+  PUT;
 
   public static HttpMethod get(String method) {
     try {
