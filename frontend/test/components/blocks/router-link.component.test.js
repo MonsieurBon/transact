@@ -2,7 +2,7 @@ import {
   fixture,
   fixtureCleanup,
 } from '@open-wc/testing-helpers/index-no-side-effects.js';
-import RouterLink from '../../src/components/router-link.component.js';
+import RouterLink from '../../../src/components/blocks/router-link.component.js';
 
 describe('RouterLink', () => {
   let router;

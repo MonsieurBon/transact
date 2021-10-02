@@ -12,8 +12,22 @@ exports[`Router component should render 1`] = `
   }
 </style>
 <div id=\\"router-outlet\\"></div>
-<slot>
-</slot>"
+"
+`;
+
+exports[`Router component should render a secured node if authenticated 1`] = `
+"
+<style>
+  :host {
+    contain: content;
+  }
+  
+  slot {
+    display: none;
+  }
+</style>
+<div id=\\"router-outlet\\"><t-test route=\\"/foo\\" secured=\\"true\\"></t-test></div>
+"
 `;
 
 exports[`Router component should render the current path 1`] = `
@@ -27,9 +41,8 @@ exports[`Router component should render the current path 1`] = `
     display: none;
   }
 </style>
-<div id=\\"router-outlet\\"><div data-route=\\"/foo\\"></div></div>
-<slot>
-</slot>"
+<div id=\\"router-outlet\\"><t-test route=\\"/foo\\"></t-test></div>
+"
 `;
 
 exports[`Router component should replace the rendered node 1`] = `
@@ -43,9 +56,8 @@ exports[`Router component should replace the rendered node 1`] = `
     display: none;
   }
 </style>
-<div id=\\"router-outlet\\"><div data-route=\\"/foo\\"></div></div>
-<slot>
-</slot>"
+<div id=\\"router-outlet\\"><t-test route=\\"/foo\\"></t-test></div>
+"
 `;
 
 exports[`Router component should replace the rendered node 2`] = `
@@ -59,7 +71,6 @@ exports[`Router component should replace the rendered node 2`] = `
     display: none;
   }
 </style>
-<div id=\\"router-outlet\\"><div data-route=\\"/bar\\"></div></div>
-<slot>
-</slot>"
+<div id=\\"router-outlet\\"><t-test route=\\"/bar\\"></t-test></div>
+"
 `;

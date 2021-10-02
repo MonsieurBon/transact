@@ -1,9 +1,14 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import Router from '../../src/services/router.service.js';
 
 describe('Router service', () => {
   beforeEach(() => {
     history.pushState = jest.fn();
     history.replaceState = jest.fn();
+    history.back = jest.fn(() => window.dispatchEvent(new Event('popstate')));
   });
 
   it('should be created', () => {
@@ -101,4 +106,17 @@ describe('Router service', () => {
     expect(c1.navigationStateChanged).toHaveBeenCalledTimes(0);
     expect(c2.navigationStateChanged).toHaveBeenCalledTimes(1);
   });
+
+  it('should call registered components on back button click', () => {
+    const component = {
+      navigationStateChanged: jest.fn(),
+    };
+
+    const router = new Router();
+    router.register(component);
+
+    history.back();
+
+    expect(component.navigationStateChanged).toHaveBeenCalledTimes(1);
+  })
 });

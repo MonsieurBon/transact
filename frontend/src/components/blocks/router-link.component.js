@@ -1,9 +1,10 @@
 export default function RouterLink(router) {
-  return class extends HTMLAnchorElement {
+  return class RouterLink extends HTMLAnchorElement {
     constructor() {
       super();
     }
 
+    // noinspection JSUnusedGlobalSymbols
     connectedCallback() {
       this.addEventListener('click', this.navigate);
     }
@@ -18,6 +19,7 @@ export default function RouterLink(router) {
       }
     }
 
+    // noinspection JSUnusedGlobalSymbols
     disconnectedCallback() {
       this.removeEventListener('click', this.navigate);
     }

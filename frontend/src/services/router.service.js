@@ -1,6 +1,8 @@
 export default function Router() {
   const components = [];
 
+  window.addEventListener('popstate', callComponents);
+
   function callComponents() {
     components.find(c => c.navigationStateChanged());
   }
